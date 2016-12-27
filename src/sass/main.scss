@@ -89,6 +89,7 @@ button {
 	flex-direction: row;
 	flex-wrap: nowrap;
 	justify-content: center;
+
 	.left {
 		align-self:center;
 		flex-grow: 1;
@@ -100,6 +101,7 @@ button {
 		flex-grow: 9;
 		display: inline-block;
 		float: center;
+		max-width: 90%;
 		max-height: 500px;
 	}
 	.right {

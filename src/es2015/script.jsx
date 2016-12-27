@@ -1,18 +1,30 @@
-const url = "https://api-fotki.yandex.ru/api/top/?format=json";
-let pages = [],
-	countImgPage = 8;
+const url = 'https://api-fotki.yandex.ru/api/top/?format=json',
+		countImgPage = 8,
+		speedAnim = 600;
 
-function getPages(data) {
+let pages = [];
+
+function getPages(data){
+
 	let j = 0;
+
 	for(let i=0; i <= (Math.ceil(data.length/countImgPage))-1; i++) {
+
 		pages[i] = [];
+
 		for (let z=0;z<countImgPage;z++) {
+
 			if (data[j]) {
+
 				pages[i].push(data[j]);
+
 			} else {
+
 				break;
+
 			}
 			j++;
+
 		}
 	}
 }
@@ -20,41 +32,60 @@ function getPages(data) {
 /* ########## START APP ############ */
 
 jQuery.ajax({
+
 	url: url,
 	crossDomain: true,
 	contentType: 'application/json',
 	dataType: 'jsonp',
-}).done(function (data) {
+
+})
+.done(function(data){
+
 	getPages(data.entries);
 	ReactDOM.render(
 		<Photos />,
 		document.getElementById('main')
-		);
+	);
+
+})
+.fail((err) => {
+	throw err.status+': '+err.statusText;
 });
 
 /* ################################# */
 
 class ImgPhotos extends React.Component {
-	constructor () {
+
+	constructor(){
 		super();
 	}
-	render () {
+
+	render(){
 		if (!this.props.photo) { 
+
 			return null; 
+
 		} else {
-			return <img className="thumbnail imgPhotos"  onClick={this.props.onClick}  src={this.props.photo.img.M.href} />;
+			return <img 
+						className="thumbnail imgPhotos"
+						onClick={this.props.onClick}
+						src={this.props.photo.img.M.href}
+					/>;
 		}
 	}
 }
 
 class ImgSelectedPhoto extends React.Component {
-	constructor () {
+
+	constructor(){
 		super();
 	}
-	render () {
+
+	render(){
 		if (!this.props.photo) { 
 			return null; 
 		} else {
+
 			return (
 				<div className="popup">
 					<div className="popup__content">
@@ -82,7 +113,9 @@ class ImgSelectedPhoto extends React.Component {
 }
 
 class Photos extends React.Component {
-	constructor () {
+
+	constructor(){
+
 		super();
 		this.state = {
 			page: 0,
@@ -92,134 +125,201 @@ class Photos extends React.Component {
 			selectedNum: 0
 		}
 		window.addEventListener('keydown', this.userClick.bind(this));
+
 	}
-	userClick(e) {
+
+	userClick(e){
+
 		if (this.state.selected) {
+
 			if (e.keyCode===37) {this.prevPhoto()};
 			if (e.keyCode===39) {this.nextPhoto()};
+
 		} else {
+
 			if (e.keyCode===37) {this.prevPage()};
 			if (e.keyCode===39) {this.nextPage()};
+
 		}
 	}
-	renderImgPhotos(i) {
-		return <ImgPhotos page={this.state.page} photo={this.state.watchPhotos[i]} numImg={i} onClick={() => this.selectUserPhoto(i)} />;
+	renderImgPhotos(i){
+
+		return <ImgPhotos
+					page={this.state.page}
+					photo={this.state.watchPhotos[i]}
+					numImg={i}
+					onClick={() => this.selectUserPhoto(i)}
+				/>;
+
 	}
-	selectUserPhoto(i) {
+	selectUserPhoto(i){
+
 		this.setState({
 			selectedPhoto: this.state.watchPhotos[i],
 			selected: true,
 			selectedNum: i
 		})
+
 	}
-	renderImgPhoto() {
-		if (this.state.selected) {
-			return <ImgSelectedPhoto photo={this.state.selectedPhoto} close={()=>this.closePhoto()} next={()=>this.nextPhoto()} prev={()=>this.prevPhoto()} />;
+	renderImgPhoto(){
+
+		if (this.state.selected){
+
+			return <ImgSelectedPhoto
+						photo={this.state.selectedPhoto}
+						close={()=>this.closePhoto()}
+						next={()=>this.nextPhoto()}
+						prev={()=>this.prevPhoto()}
+					/>;
+		
 		} else {
+
 			return null;
+
 		}
 	}
-	closePhoto() {
+	closePhoto(){
+
 		let that = this;
-		$('.popup').animate({'opacity':'0'},600,function(){
+		$('.popup').animate({'opacity':'0'},speedAnim,function(){
+
 			that.setState({
 				selectedPhoto: {},
 				selected: false
 			})
 			$(this).css("opacity","1");
+
 		});
 	}
-	nextPhoto() {
+	nextPhoto(){
+
 		let next = this.state.selectedNum+1;
+
 		if(next>=this.state.watchPhotos.length) {
 			this.closePhoto();
 			return;
 		}
+
 		this.setState({
 			selectedPhoto: this.state.watchPhotos[next],
 			selectedNum: next
 		})
+
 	}
-	prevPhoto() {
+	prevPhoto(){
+
 		let prev = this.state.selectedNum-1;
+
 		if(prev<0) {
 			this.closePhoto();
 			return;
 		}
+
 		this.setState({
 			selectedPhoto: this.state.watchPhotos[prev],
 			selectedNum: prev
 		})
+
 	}
-	nextPage () {
+	nextPage(){
+
 		let nextPage = this.state.page+1,
-			watchPhotos = [];
+			watchPhotos = [],
+			that = this;
+
 		for (let i = 0; i<pages[nextPage].length; i++) {
 			watchPhotos.push(pages[nextPage][i]);
 		}
-		let that = this;
-		$('.thumbnail').animate({'opacity':'0'},600,function(){
+
+		$('.thumbnail').animate({'opacity':'0'},speedAnim,function(){
+
 			that.setState({
+
 				page: nextPage,
 				watchPhotos: watchPhotos
+
 			});
-			$(this).animate({'opacity':'1'},600);
+
+			$(this).animate({'opacity':'1'},speedAnim);
+
 		});
 	}
-	prevPage () {
+	prevPage(){
+
 		let prevPage = this.state.page-1,
-			watchPhotos = [];
+			watchPhotos = [],
+			that = this;
+
 		for (let i = 0; i<pages[prevPage].length; i++) {
 			watchPhotos.push(pages[prevPage][i]);
 		}
-		let that = this;
-		$('.thumbnail').animate({'opacity':'0'},600,function(){
+
+		$('.thumbnail').animate({'opacity':'0'},speedAnim,function(){
+
 			that.setState({
 				page: prevPage,
 				watchPhotos: watchPhotos
 			});
-			$(this).animate({'opacity':'1'},600);
+
+			$(this).animate({'opacity':'1'},speedAnim);
+
 		});
+
 	}
-	leftArrow () {
+	leftArrow(){
+
 		if (this.state.page===0) {
+
 			return (
 				<div className="left">
 				</div>
 			);
+
 		} else {
+
 			return (
 				<div className="left">
 					<img src="img/left.png" onClick={()=>this.prevPage()}/>
 				</div>
 			);
+
 		}
 	}
-	rightArrow () {
+	rightArrow(){
+
 		if (this.state.page===6) {
+
 			return (
 				<div className="right">
 				</div>
 			);
+
 		} else {
+
 			return (
 				<div className="right" >
 					<img src="img/right.png" onClick={()=>this.nextPage()} />
 				</div>
 			);
+
 		}
 	}
-	componentWillMount() {
+	componentWillMount(){
+
 		let watchPhotos = [];
+
 		for (let i = 0; i<pages[this.state.page].length; i++) {
 			watchPhotos.push(pages[this.state.page][i]);
 		}
+
 		this.setState({
 			page: this.state.page,
 			watchPhotos: watchPhotos
 		});
+
 	}
-	render () {
+	render(){
+
 		return (
 			<div className="photos">
 				{this.leftArrow()}
@@ -236,7 +336,7 @@ class Photos extends React.Component {
 				{this.rightArrow()}
 				{this.renderImgPhoto()}
 			</div>
-
 		);
+
 	}
 }
