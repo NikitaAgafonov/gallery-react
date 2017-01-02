@@ -99,7 +99,9 @@ class ImgSelectedPhoto extends React.Component {
 						</div>
 						<div className="popup__content_image">
 							<img className="left" src="img/left_popup.png" onClick={this.props.prev} />
-							<img className="thumbnail" src={this.props.photo.img.XL.href} />
+							<div className="center">
+								<img className="thumbnail" src={this.props.photo.img.XL.href} />
+							</div>
 							<img className="right" src="img/right_popup.png"  onClick={this.props.next} />
 						</div>
 						<div className="popup__content_footer">
@@ -186,7 +188,7 @@ class Photos extends React.Component {
 			that.setState({
 				selectedPhoto: {},
 				selected: false
-			})
+			});
 			$(this).css("opacity","1");
 
 		});
