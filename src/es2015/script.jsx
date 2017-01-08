@@ -73,36 +73,43 @@ class ImgPhotos extends React.Component {
 					/>;
 		}
 	}
+
 }
 
 class ImgSelectedPhoto extends React.Component {
 
-	constructor(){
-		super();
+	constructor(props){
+		super(props);
+
 	}
 
 	render(){
 		if (!this.props.photo) { 
 			return null; 
 		} else {
-
+            let stylePrev = {
+                opacity: this.props.havePrev
+            };
+            let styleNext = {
+                opacity: this.props.haveNext
+            };
 			return (
-				<div className="popup">
+				<div className="popup" onClick={this.props.close}>
 					<div className="popup__content">
 						<div className="popup__content_header">
 							<div className="popup__content_name">
 								{this.props.photo.title}
 							</div>
 							<div className="popup__content_close">
-								<span className="glyphicon glyphicon-remove-sign" onClick={this.props.close}></span>
+								<img src="./img/close.png" className="popup__content_closeImg" alt=""/>
 							</div>
 						</div>
 						<div className="popup__content_image">
-							<img className="left" src="img/left_popup.png" onClick={this.props.prev} />
+                            <img className="left" src="img/left_popup.png" style={stylePrev} onClick={this.props.prev} />
 							<div className="center">
 								<img className="thumbnail" src={this.props.photo.img.XL.href} />
 							</div>
-							<img className="right" src="img/right_popup.png"  onClick={this.props.next} />
+							<img className="right" src="img/right_popup.png" style={styleNext} onClick={this.props.next} />
 						</div>
 						<div className="popup__content_footer">
 							Author: {this.props.photo.author}
@@ -112,6 +119,7 @@ class ImgSelectedPhoto extends React.Component {
 			);
 		}
 	}
+
 }
 
 class Photos extends React.Component {
@@ -125,7 +133,9 @@ class Photos extends React.Component {
 			selectedPhoto: {},
 			selected: false,
 			selectedNum: 0
-		}
+		};
+		this.haveNext = 1;
+		this.havePrev = 1;
 		window.addEventListener('keydown', this.userClick.bind(this));
 
 	}
@@ -134,16 +144,19 @@ class Photos extends React.Component {
 
 		if (this.state.selected) {
 
-			if (e.keyCode===37) {this.prevPhoto()};
-			if (e.keyCode===39) {this.nextPhoto()};
+			if (e.keyCode===37) {this.prevPhoto()}
+
+			if (e.keyCode===39) {this.nextPhoto()}
 
 		} else {
 
-			if (e.keyCode===37) {this.prevPage()};
-			if (e.keyCode===39) {this.nextPage()};
+			if (e.keyCode===37 && 0 !== this.state.page ) this.prevPage();
+
+			if (e.keyCode===39 && pages.length-1 > this.state.page)  this.nextPage();
 
 		}
 	}
+
 	renderImgPhotos(i){
 
 		return <ImgPhotos
@@ -154,7 +167,12 @@ class Photos extends React.Component {
 				/>;
 
 	}
+
 	selectUserPhoto(i){
+
+        this.havePrev = (i === 0) ? 0: 1;
+
+        this.haveNext = (i === pages[this.state.page].length - 1) ? 0 : 1;
 
 		this.setState({
 			selectedPhoto: this.state.watchPhotos[i],
@@ -163,15 +181,18 @@ class Photos extends React.Component {
 		})
 
 	}
+
 	renderImgPhoto(){
 
 		if (this.state.selected){
 
 			return <ImgSelectedPhoto
 						photo={this.state.selectedPhoto}
-						close={()=>this.closePhoto()}
+						close={(e)=>this.clickClosePhoto(e)}
 						next={()=>this.nextPhoto()}
 						prev={()=>this.prevPhoto()}
+						haveNext={this.haveNext}
+						havePrev={this.havePrev}
 					/>;
 		
 		} else {
@@ -180,52 +201,80 @@ class Photos extends React.Component {
 
 		}
 	}
-	closePhoto(){
 
-		let that = this;
-		$('.popup').animate({'opacity':'0'},speedAnim,function(){
+	closePhoto() {
 
-			that.setState({
-				selectedPhoto: {},
-				selected: false
-			});
-			$(this).css("opacity","1");
+        let that = this;
 
-		});
+        $('.popup').animate({'opacity':'0'},speedAnim,function(){
+
+            that.setState({
+                selectedPhoto: {},
+                selected: false
+            });
+
+            $(this).css("opacity","1");
+
+        });
 	}
+
+	clickClosePhoto(e) {
+
+		if (e)
+			if (e.target.className === 'popup__content_closeImg' || e.target.className === 'popup')
+				this.closePhoto();
+
+	}
+
 	nextPhoto(){
 
 		let next = this.state.selectedNum+1;
 
-		if(next>=this.state.watchPhotos.length) {
-			this.closePhoto();
-			return;
-		}
+		if(next === pages[this.state.page].length-1) this.haveNext = 0;
 
-		this.setState({
-			selectedPhoto: this.state.watchPhotos[next],
-			selectedNum: next
-		})
+		if(next>this.state.watchPhotos.length-1) {
+
+			this.closePhoto()
+
+        } else {
+
+			this.havePrev = 1;
+
+			this.setState({
+				selectedPhoto: this.state.watchPhotos[next],
+				selectedNum: next
+			});
+
+        }
 
 	}
+
 	prevPhoto(){
 
 		let prev = this.state.selectedNum-1;
 
-		if(prev<0) {
-			this.closePhoto();
-			return;
-		}
+		if(prev===0) this.havePrev = 0;
 
-		this.setState({
-			selectedPhoto: this.state.watchPhotos[prev],
-			selectedNum: prev
-		})
+		if(prev<0) {
+
+			this.closePhoto()
+
+		} else {
+
+			this.haveNext = 1;
+
+			this.setState({
+				selectedPhoto: this.state.watchPhotos[prev],
+				selectedNum: prev
+			})
+
+        }
 
 	}
+
 	nextPage(){
 
-		let nextPage = this.state.page+1,
+		let nextPage = (pages.length===this.state.page+1) ? pages.length: this.state.page+1,
 			watchPhotos = [],
 			that = this;
 
@@ -233,22 +282,22 @@ class Photos extends React.Component {
 			watchPhotos.push(pages[nextPage][i]);
 		}
 
-		$('.thumbnail').animate({'opacity':'0'},speedAnim,function(){
+		$('.center').animate({'opacity':'0'},speedAnim,function(){
+
 
 			that.setState({
-
 				page: nextPage,
 				watchPhotos: watchPhotos
-
 			});
 
 			$(this).animate({'opacity':'1'},speedAnim);
 
 		});
 	}
+
 	prevPage(){
 
-		let prevPage = this.state.page-1,
+		let prevPage = (this.state.page===0) ? 0: this.state.page-1,
 			watchPhotos = [],
 			that = this;
 
@@ -256,7 +305,7 @@ class Photos extends React.Component {
 			watchPhotos.push(pages[prevPage][i]);
 		}
 
-		$('.thumbnail').animate({'opacity':'0'},speedAnim,function(){
+		$('.center').animate({'opacity':'0'},speedAnim,function(){
 
 			that.setState({
 				page: prevPage,
@@ -268,6 +317,7 @@ class Photos extends React.Component {
 		});
 
 	}
+
 	leftArrow(){
 
 		if (this.state.page===0) {
@@ -287,6 +337,7 @@ class Photos extends React.Component {
 
 		}
 	}
+
 	rightArrow(){
 
 		if (this.state.page===6) {
@@ -306,6 +357,7 @@ class Photos extends React.Component {
 
 		}
 	}
+
 	componentWillMount(){
 
 		let watchPhotos = [];
@@ -320,6 +372,7 @@ class Photos extends React.Component {
 		});
 
 	}
+
 	render(){
 
 		return (
@@ -341,4 +394,5 @@ class Photos extends React.Component {
 		);
 
 	}
+
 }
